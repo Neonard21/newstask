@@ -4,8 +4,10 @@ from django.core.serializers import serialize
 from django.shortcuts import render
 from django.views.generic import ListView, DetailView
 from .models import NewsArticle
+import logging
 from datetime import datetime
 from django.db.models import F
+import json
 from django.views.decorators.csrf import csrf_exempt
 
 # Create your views here.
@@ -56,9 +58,21 @@ save_news()
 @csrf_exempt
 def newsarticlelist(request):
     if request.method == 'GET':
-        newsfeed = NewsArticle.objects.all()
-        json_data = serialize('json', newsfeed)
-        return JsonResponse(json_data, safe=False)
+        newsfeed = [
+            {   
+                'id': article.id,
+                'title': article.title,
+                'description': article.description,
+                'url': article.url,
+                'url_to_image': article.url_to_image,
+                'published_at': article.published_at,
+                'tag': article.tag
+            }
+            for article in NewsArticle.objects.order_by('?')
+        ]
+
+        
+        return JsonResponse(newsfeed, safe=False)
     
     if request.method == 'POST':
         data = request.POST
@@ -86,24 +100,42 @@ def newsarticledetail(request, pk):
         return JsonResponse({'message': 'News Article deleted successfully'})  
     
 
+@csrf_exempt
 def like_newsarticle(request, pk):
     if request.method == 'PUT':
-        news_article = NewsArticle.objects.get(pk = pk)
-        news_article.likes = F('likes') + 1
-        news_article.save()
-        json_data = serialize('json', [news_article.likes])
-        return JsonResponse(json_data, safe=False)
+        try:
+            news_article = NewsArticle.objects.get(pk = pk)
+            news_article.likes = F('likes') + 1
+            news_article.save()
+            news_article.refresh_from_db()  # Refresh the object to get the updated value
+            return JsonResponse({'likes': news_article.likes}, safe=False)
+        except NewsArticle.DoesNotExist:
+            return JsonResponse({'error': 'News Article not found'}, status=404)
 
 def dislike_newsarticle(request, pk):
-    if request.method == 'PUT':
-        news_article = NewsArticle.objects.get(pk = pk)
-        news_article.dislikes = F('dislikes') + 1
-        news_article.save()
-        json_data = serialize('json', [news_article.dislikes])
-        return JsonResponse(json_data, safe=False)
+     if request.method == 'PUT':
+        try:
+            news_article = NewsArticle.objects.get(pk = pk)
+            news_article.likes = F('likes') + 1
+            news_article.save()
+            news_article.refresh_from_db()  # Refresh the object to get the updated value
+            return JsonResponse({'likes': news_article.likes}, safe=False)
+        except NewsArticle.DoesNotExist:
+            return JsonResponse({'error': 'News Article not found'}, status=404)
 
 def tagged_articlelist(request, tag):
     if request.method == 'GET':
-        newsfeed = NewsArticle.objects.filter(tag = tag)
-        json_data = serialize('json', newsfeed)
-        return JsonResponse(json_data, safe=False)
+        newsfeed = [
+            {
+                'id': article.id,
+                'title': article.title,
+                'description': article.description,
+                'url': article.url,
+                'url_to_image': article.url_to_image,
+                'published_at': article.published_at,
+                'tag': article.tag
+            }
+            for article in NewsArticle.objects.filter(tag = tag)
+        ]
+
+        return JsonResponse(newsfeed, safe=False)

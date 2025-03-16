@@ -7,7 +7,7 @@ app_name = 'news_app'
 urlpatterns = [
     path("", newsarticlelist, name = "news_article_list"),
     path("detail/<int:pk>/", newsarticledetail, name = "news_article_detail"),
-    path("likes/<int:pk>/", newsarticledetail, name = "news_article_like"),
-    path("dislikes/<int:pk>/", newsarticledetail, name = "news_article_dislike"),
+    path("likes/<int:pk>/", like_newsarticle, name = "news_article_like"),
+    path("dislikes/<int:pk>/", dislike_newsarticle, name = "news_article_dislike"),
     path("tag/<tag>/", tagged_articlelist, name = "news_tagged_list"),
 ]
