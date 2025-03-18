@@ -88,6 +88,7 @@ def newsarticlelist(request):
         news_article.save()
         return JsonResponse({'message': 'News Article created successfully'})
 
+@csrf_exempt
 def newsarticledetail(request, pk):
     if request.method == 'GET':
         news_article = NewsArticle.objects.get(pk = pk)
